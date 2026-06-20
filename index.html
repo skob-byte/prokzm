@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>الموقع الفخم</title>
+<style>
+  :root{
+    --pink-1:#ffd6e8;
+    --pink-2:#ff8fc7;
+    --pink-3:#d6336c;
+    --pink-dark:#3a0d22;
+    --gold:#e8c27a;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    font-family:'Tahoma','Segoe UI',sans-serif;
+    background: radial-gradient(circle at 50% 0%, var(--pink-dark), #1a0510 80%);
+    color:#fff;
+    min-height:100vh;
+    overflow-x:hidden;
+  }
+
+  /* ===== شاشة الموافقة ===== */
+  #gate-overlay{
+    position:fixed;
+    inset:0;
+    z-index:9999;
+    background: rgba(58,13,34,0.25);
+    backdrop-filter: blur(22px) saturate(120%);
+    -webkit-backdrop-filter: blur(22px) saturate(120%);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding:30px;
+    transition: opacity .8s ease, visibility .8s ease;
+  }
+  #gate-overlay.hidden{
+    opacity:0;
+    visibility:hidden;
+    pointer-events:none;
+  }
+  #gate-overlay h1{
+    font-size:1.8rem;
+    color:var(--pink-2);
+    text-shadow:0 0 20px var(--pink-3);
+    margin-bottom:15px;
+  }
+  #gate-overlay p{
+    max-width:500px;
+    line-height:1.8;
+    color:#f3d6e6;
+    margin-bottom:30px;
+    font-size:.95rem;
+  }
+  #agree-btn{
+    background: linear-gradient(135deg, var(--pink-2), var(--pink-3));
+    border:none;
+    color:#fff;
+    padding:14px 40px;
+    font-size:1rem;
+    border-radius:50px;
+    cursor:pointer;
+    box-shadow:0 0 25px var(--pink-3);
+    transition: transform .3s ease, box-shadow .3s ease;
+    font-weight:bold;
+    letter-spacing:1px;
+  }
+  #agree-btn:hover{
+    transform:scale(1.07);
+    box-shadow:0 0 40px var(--pink-2);
+  }
+
+  /* ===== زر القائمة (☰) ===== */
+  #menu-btn{
+    position:fixed;
+    top:18px;
+    left:18px;
+    z-index:1100;
+    width:48px;
+    height:48px;
+    border-radius:12px;
+    background: linear-gradient(135deg, rgba(255,143,199,0.15), rgba(214,51,108,0.2));
+    border:1px solid rgba(255,182,217,0.35);
+    backdrop-filter: blur(10px);
+    cursor:pointer;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:5px;
+    transition: box-shadow .3s ease, transform .3s ease;
+  }
+  #menu-btn:hover{
+    box-shadow:0 0 20px var(--pink-3);
+    transform:scale(1.08);
+  }
+  #menu-btn span{
+    display:block;
+    width:22px;
+    height:2px;
+    background: var(--pink-2);
+    border-radius:2px;
+    transition: transform .3s ease, opacity .3s ease;
+  }
+  #menu-btn.open span:nth-child(1){ transform: translateY(7px) rotate(45deg); }
+  #menu-btn.open span:nth-child(2){ opacity:0; }
+  #menu-btn.open span:nth-child(3){ transform: translateY(-7px) rotate(-45deg); }
+
+  /* ===== القائمة الجانبية ===== */
+  #sidebar{
+    position:fixed;
+    top:0;
+    left:0;
+    width:270px;
+    height:100vh;
+    z-index:1050;
+    background: linear-gradient(180deg, #2a0918 0%, #1a0510 100%);
+    border-right:1px solid rgba(255,143,199,0.2);
+    box-shadow:6px 0 40px rgba(214,51,108,0.3);
+    transform: translateX(-100%);
+    transition: transform .4s cubic-bezier(.4,0,.2,1);
+    display:flex;
+    flex-direction:column;
+    padding:80px 20px 30px;
+  }
+  #sidebar.open{
+    transform: translateX(0);
+  }
+  .sidebar-title{
+    font-size:.7rem;
+    color:var(--gold);
+    letter-spacing:3px;
+    margin-bottom:18px;
+    opacity:.7;
+    text-align:center;
+  }
+  .sidebar-divider{
+    width:100%;
+    height:1px;
+    background: linear-gradient(to right, transparent, var(--pink-3), transparent);
+    margin-bottom:20px;
+  }
+  .sidebar-item{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:14px 16px;
+    border-radius:12px;
+    cursor:pointer;
+    border:1px solid rgba(255,143,199,0.15);
+    background: rgba(255,143,199,0.05);
+    transition: background .3s, border-color .3s, transform .3s;
+    color:var(--pink-1);
+    font-size:.95rem;
+    font-weight:bold;
+    letter-spacing:.5px;
+  }
+  .sidebar-item:hover{
+    background: rgba(214,51,108,0.2);
+    border-color:var(--pink-2);
+    transform:translateX(-4px);
+  }
+  .sidebar-item .item-icon{
+    font-size:1.2rem;
+  }
+
+  /* طبقة التعتيم خلف السايدبار */
+  #sidebar-overlay{
+    position:fixed;
+    inset:0;
+    z-index:1040;
+    background:rgba(0,0,0,0.5);
+    opacity:0;
+    visibility:hidden;
+    transition: opacity .4s ease, visibility .4s ease;
+  }
+  #sidebar-overlay.open{
+    opacity:1;
+    visibility:visible;
+  }
+
+  /* ===== الصفحات ===== */
+  .page{
+    display:none;
+    padding:40px 15px 80px;
+  }
+  .page.active{
+    display:block;
+  }
+
+  /* ===== بروفايل ===== */
+  .profile-wrap{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    margin-bottom:50px;
+  }
+  .crown{
+    width:60px;
+    margin-bottom:-22px;
+    z-index:2;
+    filter:drop-shadow(0 0 10px var(--gold));
+    animation: floatCrown 3s ease-in-out infinite;
+  }
+  @keyframes floatCrown{
+    0%,100%{transform:translateY(0);}
+    50%{transform:translateY(-6px);}
+  }
+  .avatar{
+    width:140px;
+    height:140px;
+    border-radius:50%;
+    object-fit:cover;
+    border:4px solid var(--gold);
+    box-shadow:0 0 35px var(--pink-3), 0 0 60px rgba(255,143,199,.4);
+  }
+  .dev-name{
+    margin-top:18px;
+    font-size:1.3rem;
+    color:var(--pink-1);
+    text-shadow:0 0 15px var(--pink-3);
+    letter-spacing:1px;
+    font-weight:bold;
+  }
+  .dev-bio{
+    margin-top:10px;
+    font-size:.85rem;
+    color:var(--gold);
+    text-shadow:0 0 12px rgba(232,194,122,0.6);
+    letter-spacing:2px;
+    text-align:center;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:8px;
+  }
+  .bio-title{
+    font-size:.88rem;
+    color:var(--gold);
+    letter-spacing:3px;
+    text-shadow:0 0 14px rgba(232,194,122,0.7);
+  }
+  .bio-divider{
+    width:120px;
+    height:1px;
+    background:linear-gradient(to left, transparent, var(--gold), transparent);
+    margin:2px 0;
+  }
+  .bio-sub{
+    font-size:.78rem;
+    color:var(--pink-1);
+    letter-spacing:1px;
+    opacity:.85;
+    font-style:italic;
+  }
+
+  /* ===== شبكة المربعات ===== */
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(5, 1fr);
+    gap:18px;
+    max-width:900px;
+    margin:0 auto;
+  }
+  @media(max-width:700px){
+    .grid{ grid-template-columns:repeat(3, 1fr); }
+  }
+  @media(max-width:420px){
+    .grid{ grid-template-columns:repeat(2, 1fr); }
+  }
+  .card{
+    background: linear-gradient(160deg, rgba(255,255,255,0.06), rgba(255,143,199,0.05));
+    border:1px solid rgba(255,182,217,0.3);
+    border-radius:16px;
+    padding:12px 8px 14px;
+    text-align:center;
+    cursor:pointer;
+    transition: transform .3s ease, box-shadow .3s ease, border-color .3s ease;
+  }
+  .card:hover{
+    transform:translateY(-6px) scale(1.03);
+    box-shadow:0 8px 25px rgba(214,51,108,0.45);
+    border-color:var(--pink-2);
+  }
+  .card img{
+    width:100%;
+    aspect-ratio:1/1;
+    object-fit:cover;
+    border-radius:12px;
+    box-shadow:0 0 12px rgba(0,0,0,0.4);
+  }
+  .card span{
+    display:block;
+    margin-top:8px;
+    font-size:.85rem;
+    color:var(--pink-1);
+    font-weight:bold;
+  }
+
+  /* ===== رأس صفحة القسم ===== */
+  .section-header{
+    text-align:center;
+    margin-bottom:40px;
+    padding-top:20px;
+  }
+  .section-header h2{
+    font-size:1.5rem;
+    color:var(--pink-2);
+    text-shadow:0 0 20px var(--pink-3);
+    letter-spacing:2px;
+    margin-bottom:10px;
+  }
+  .section-header .section-divider{
+    width:180px;
+    height:1px;
+    background:linear-gradient(to left, transparent, var(--gold), transparent);
+    margin:0 auto 10px;
+  }
+  .section-header p{
+    font-size:.8rem;
+    color:var(--gold);
+    letter-spacing:2px;
+    opacity:.8;
+  }
+
+  /* ===== زر العودة ===== */
+  .back-btn{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+    margin:40px auto 0;
+    padding:13px 35px;
+    border-radius:50px;
+    background: linear-gradient(135deg, rgba(255,143,199,0.12), rgba(214,51,108,0.18));
+    border:1px solid rgba(255,143,199,0.35);
+    color:var(--pink-1);
+    font-size:.9rem;
+    font-weight:bold;
+    letter-spacing:1px;
+    cursor:pointer;
+    width:fit-content;
+    transition: box-shadow .3s, transform .3s, background .3s;
+  }
+  .back-btn:hover{
+    background: linear-gradient(135deg, var(--pink-2), var(--pink-3));
+    box-shadow:0 0 25px var(--pink-3);
+    transform:scale(1.05);
+  }
+
+  /* ===== عارض الصورة بملء الشاشة ===== */
+  #fullscreen-viewer{
+    position:fixed;
+    inset:0;
+    background:rgba(10,2,8,0.95);
+    backdrop-filter: blur(10px);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:2000;
+    flex-direction:column;
+  }
+  #fullscreen-viewer.active{
+    display:flex;
+  }
+  #fullscreen-viewer img{
+    max-width:90%;
+    max-height:80vh;
+    border-radius:14px;
+    box-shadow:0 0 50px var(--pink-3);
+    animation: popIn .35s ease;
+  }
+  @keyframes popIn{
+    from{ transform:scale(.85); opacity:0; }
+    to{ transform:scale(1); opacity:1; }
+  }
+  #fullscreen-viewer .fs-name{
+    margin-top:16px;
+    font-size:1.2rem;
+    color:var(--pink-1);
+    text-shadow:0 0 12px var(--pink-3);
+  }
+  #close-viewer{
+    position:absolute;
+    top:25px;
+    left:25px;
+    width:46px;
+    height:46px;
+    border-radius:50%;
+    background:linear-gradient(135deg, var(--pink-2), var(--pink-3));
+    border:none;
+    color:#fff;
+    font-size:1.4rem;
+    cursor:pointer;
+    box-shadow:0 0 20px var(--pink-3);
+    line-height:46px;
+    text-align:center;
+  }
+</style>
+</head>
+<body>
+
+  <!-- شاشة الموافقة -->
+  <div id="gate-overlay">
+    <h1>مرحباً بك في عالمنا الفخم</h1>
+    <p>
+      قبل الدخول، يرجى الموافقة على شروط الدخول والاستخدام الخاصة بهذا الموقع.
+      بالضغط على "موافق" أنت تؤكد قبولك للشروط وتسمح بتشغيل الموسيقى الخلفية تلقائياً.
+    </p>
+    <button id="agree-btn">موافق، الدخول للموقع</button>
+  </div>
+
+  <!-- الموسيقى الخلفية -->
+  <audio id="bg-audio" src="MP/gg.mp3" loop></audio>
+
+  <!-- زر القائمة ☰ -->
+  <button id="menu-btn" aria-label="القائمة">
+    <span></span>
+    <span></span>
+    <span></span>
+  </button>
+
+  <!-- طبقة تعتيم خلف السايدبار -->
+  <div id="sidebar-overlay"></div>
+
+  <!-- القائمة الجانبية -->
+  <div id="sidebar">
+    <div class="sidebar-title">القـائـمـة</div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-item" id="go-section">
+      <span class="item-icon">⚔️</span>
+      <span>نظام ذو المنجل المنتظر</span>
+    </div>
+  </div>
+
+  <!-- ===== الصفحة الرئيسية ===== -->
+  <div class="page active" id="page-home">
+    <div class="profile-wrap">
+      <img class="crown" src="images/crown.png" alt="تاج">
+      <img class="avatar" src="images/profile.jpg" alt="الصورة الشخصية">
+      <div class="dev-name">اسم المطور</div>
+      <div class="dev-bio">
+        <div class="bio-title">✦ مصمم رقمي · مطور مواقع · صانع تجارب فاخرة ✦</div>
+        <div class="bio-divider"></div>
+        <div class="bio-sub">أُحوّل الأفكار إلى عوالم رقمية لا تُنسى</div>
+      </div>
+    </div>
+
+    <div class="grid" id="cards-grid-home"></div>
+  </div>
+
+  <!-- ===== صفحة القسم ===== -->
+  <div class="page" id="page-section">
+    <div class="section-header">
+      <h2>⚔️ نظام ذو المنجل المنتظر</h2>
+      <div class="section-divider"></div>
+      <p>✦ مجموعة حصرية فاخرة ✦</p>
+    </div>
+
+    <div class="grid" id="cards-grid-section"></div>
+
+    <button class="back-btn" id="back-btn">
+      ← العودة إلى الصفحة الرئيسية
+    </button>
+  </div>
+
+  <!-- عارض الصور بملء الشاشة -->
+  <div id="fullscreen-viewer">
+    <button id="close-viewer">✕</button>
+    <img id="fs-image" src="" alt="">
+    <div class="fs-name" id="fs-name"></div>
+  </div>
+
+<script>
+  // ===== بيانات الصفحة الرئيسية =====
+  const homeItems = [
+    { name: "العنصر 1",  img: "images/item1.jpg" },
+    { name: "العنصر 2",  img: "images/item2.jpg" },
+    { name: "العنصر 3",  img: "images/item3.jpg" },
+    { name: "العنصر 4",  img: "images/item4.jpg" },
+    { name: "العنصر 5",  img: "images/item5.jpg" },
+    { name: "العنصر 6",  img: "images/item6.jpg" },
+    { name: "العنصر 7",  img: "images/item7.jpg" },
+    { name: "العنصر 8",  img: "images/item8.jpg" },
+    { name: "العنصر 9",  img: "images/item9.jpg" },
+    { name: "العنصر 10", img: "images/item10.jpg" },
+  ];
+
+  // ===== بيانات قسم المنجل (عدّل المسارات هنا) =====
+  const sectionItems = [
+    { name: "المنجل 1",  img: "images/sitem1.jpg" },
+    { name: "المنجل 2",  img: "images/sitem2.jpg" },
+    { name: "المنجل 3",  img: "images/sitem3.jpg" },
+    { name: "المنجل 4",  img: "images/sitem4.jpg" },
+    { name: "المنجل 5",  img: "images/sitem5.jpg" },
+    { name: "المنجل 6",  img: "images/sitem6.jpg" },
+  ];
+
+  // دالة لبناء شبكة كروت
+  function buildGrid(containerId, data){
+    const grid = document.getElementById(containerId);
+    data.forEach(item => {
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = `
+        <img src="${item.img}" alt="${item.name}">
+        <span>${item.name}</span>
+      `;
+      card.addEventListener('click', () => openViewer(item));
+      grid.appendChild(card);
+    });
+  }
+
+  buildGrid('cards-grid-home', homeItems);
+  buildGrid('cards-grid-section', sectionItems);
+
+  // ===== التنقل بين الصفحات =====
+  function showPage(id){
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    window.scrollTo({top:0, behavior:'smooth'});
+  }
+
+  document.getElementById('go-section').addEventListener('click', () => {
+    closeSidebar();
+    showPage('page-section');
+  });
+
+  document.getElementById('back-btn').addEventListener('click', () => {
+    showPage('page-home');
+  });
+
+  // ===== القائمة الجانبية =====
+  const menuBtn      = document.getElementById('menu-btn');
+  const sidebar      = document.getElementById('sidebar');
+  const sidebarOvl   = document.getElementById('sidebar-overlay');
+
+  function openSidebar(){
+    sidebar.classList.add('open');
+    sidebarOvl.classList.add('open');
+    menuBtn.classList.add('open');
+  }
+  function closeSidebar(){
+    sidebar.classList.remove('open');
+    sidebarOvl.classList.remove('open');
+    menuBtn.classList.remove('open');
+  }
+  menuBtn.addEventListener('click', () =>
+    sidebar.classList.contains('open') ? closeSidebar() : openSidebar()
+  );
+  sidebarOvl.addEventListener('click', closeSidebar);
+
+  // ===== عارض الصور =====
+  const viewer   = document.getElementById('fullscreen-viewer');
+  const fsImage  = document.getElementById('fs-image');
+  const fsName   = document.getElementById('fs-name');
+  const closeBtn = document.getElementById('close-viewer');
+
+  function openViewer(item){
+    fsImage.src = item.img;
+    fsName.textContent = item.name;
+    viewer.classList.add('active');
+  }
+  closeBtn.addEventListener('click', () => viewer.classList.remove('active'));
+  viewer.addEventListener('click', e => { if(e.target === viewer) viewer.classList.remove('active'); });
+
+  // ===== شاشة الموافقة =====
+  document.getElementById('agree-btn').addEventListener('click', () => {
+    document.getElementById('gate-overlay').classList.add('hidden');
+    document.getElementById('bg-audio').play().catch(()=>{});
+  });
+</script>
+
+</body>
+</html>
